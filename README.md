@@ -12,7 +12,7 @@ conda activate dockerrunner
 pip install -r requirements.txt -U
 ```
 
-# Docker
+## Docker
 
 - build:
 
@@ -25,3 +25,7 @@ pip install -r requirements.txt -U
   ```bash
     docker run -e iris.csv iris-model:latest
   ```
+
+## Run the runner
+
+python runner.py
