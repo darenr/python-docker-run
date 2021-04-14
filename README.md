@@ -1,6 +1,8 @@
 # python-docker-run
 Run a docker container and capture in python the stdout/stderr
 
+uses: https://github.com/docker/docker-py
+
 ## Development
 
 ```bash

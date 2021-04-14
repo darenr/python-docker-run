@@ -1,9 +1,9 @@
-FROM python:3.7
+FROM python:3.8-slim
 
 RUN mkdir /app
 WORKDIR /app
-ADD . /app/
+COPY ./ ./
+
 RUN pip install -r requirements.txt
 
-EXPOSE 5000
-CMD ["python", "app/train.py"]
+CMD ["python", "train.py"]

@@ -35,9 +35,14 @@ def train_model(source_data_csv: str, dest_artifact: str):
 
 
 if __name__ == '__main__':
-    # marshall environment inputs to docker
 
-    source_data_csv = os.environ['SOURCE_DATA_CSV']
-    dest_artifact = os.environ['DEST_ARTIFACT']
+    if 'SOURCE_DATA_CSV' in os.environ and 'DEST_ARTIFACT' in os.environ:
 
-    train_model(source_data_csv, dest_artifact)
+        source_data_csv = os.environ['SOURCE_DATA_CSV']
+        dest_artifact = os.environ['DEST_ARTIFACT']
+
+        train_model(source_data_csv, dest_artifact)
+
+    else:
+
+        print("requires SOURCE_DATA_CSV and DEST_ARTIFACT env vars")
