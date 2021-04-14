@@ -19,7 +19,7 @@ import os, logging
 logging.basicConfig(level=logging.DEBUG)
 
 def train_model(source_data_csv: str, dest_artifact: str):
-    logging.info(f" * Iris::train_model")
+    logging.info(f"Iris::train_model {source_data_csv=}, {dest_artifact=}")
 
     df = pd.read_csv(source_data_csv)
 
@@ -36,6 +36,8 @@ def train_model(source_data_csv: str, dest_artifact: str):
 
 if __name__ == '__main__':
 
+    logging.info(f" Iris::main")
+
     if 'SOURCE_DATA_CSV' in os.environ and 'DEST_ARTIFACT' in os.environ:
 
         source_data_csv = os.environ['SOURCE_DATA_CSV']
@@ -45,4 +47,6 @@ if __name__ == '__main__':
 
     else:
 
-        print("requires SOURCE_DATA_CSV and DEST_ARTIFACT env vars")
+        logging.error("requires SOURCE_DATA_CSV and DEST_ARTIFACT env vars")
+        for key in os.environ:
+            logging.info(f"{key}={os.environ.get(key)}")

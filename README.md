@@ -6,7 +6,7 @@ uses: https://github.com/docker/docker-py
 ## Development
 
 ```bash
-conda create -y --name dockerrunner python=3.7
+conda create -y --name dockerrunner python=3.8
 conda activate dockerrunner
 
 pip install -r requirements.txt -U
