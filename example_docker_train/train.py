@@ -8,7 +8,7 @@ import pandas as pd
 from sklearn.svm import SVC
 from sklearn.preprocessing import LabelEncoder
 from joblib import dump
-import os, logging
+import os, logging, time
 
 #
 # requires two options:
@@ -19,7 +19,7 @@ import os, logging
 logging.basicConfig(level=logging.DEBUG)
 
 def train_model(source_data_csv: str, dest_artifact: str):
-    logging.info(f"Iris::train_model {source_data_csv=}, {dest_artifact=}")
+    logging.info(f"Iris::train_model {source_data_csv}, {dest_artifact}")
 
     df = pd.read_csv(source_data_csv)
 
@@ -29,10 +29,18 @@ def train_model(source_data_csv: str, dest_artifact: str):
     clf = SVC()
     clf.fit(X, y)
 
-    print(clf)
+    for param, value in clf.get_params(deep=True).items():
+        logging.info(f"{param} -> {value}")
 
-    dump(clf, dest_artifact)
+    dump_file = dump(clf, dest_artifact)
+    logging.info(f"Iris::train_model created {dump_file}")
 
+    for i, row in enumerate(X.values):
+        yhat = clf.predict(row.reshape(1, -1))[0]
+        logging.info(f"Predicted: {yhat}, Actual: {y[i]}")
+        time.sleep(0.05)
+
+    logging.info("training complete")
 
 if __name__ == '__main__':
 
