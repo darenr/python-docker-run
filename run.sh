@@ -1,1 +1,2 @@
-uvicorn app:app
+mkdir -p tmp
+uvicorn --reload app:app

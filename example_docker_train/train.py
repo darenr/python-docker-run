@@ -16,26 +16,39 @@ import os, logging, time
 #   DEST_ARTIFACT:   path for resulting model
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(processName)s::%(relativeCreated)6d %(threadName)s %(message)s')
 
-def train_model(source_data_csv: str, dest_artifact: str):
-    logging.info(f"Iris::train_model {source_data_csv}, {dest_artifact}")
+
+def train_model(
+        target_variable: str,
+        training_kernel: str,
+        source_data_csv: str,
+        dest_artifact: str
+    ):
+
+    logging.info(f"TrainModelOperatortrain_model reading dataset [{source_data_csv}]")
 
     df = pd.read_csv(source_data_csv)
 
-    y = LabelEncoder().fit_transform(df['variety'])
-    X = df.drop(['variety'], axis=1)
+    logging.info(f"TrainModelOperatortrain_model dataset, rows: [{len(df)}]")
 
-    clf = SVC()
+    y = LabelEncoder().fit_transform(df[target_variable])
+    X = df.drop([target_variable], axis=1)
+
+    logging.info(f"TrainModelOperatortrain_model begin training...")
+
+    clf = SVC(kernel=training_kernel)
     clf.fit(X, y)
 
     for param, value in clf.get_params(deep=True).items():
-        logging.info(f"{param} -> {value}")
+        logging.info(f"model parameter: {param} -> {value}")
 
     dump_file = dump(clf, dest_artifact)
-    logging.info(f"Iris::train_model created {dump_file}")
+    logging.info(f"TrainModelOperatortrain_model created {dump_file}")
 
-    for i, row in enumerate(X.values):
+    for i, row in enumerate(X.sample(n=15).values):
         yhat = clf.predict(row.reshape(1, -1))[0]
         logging.info(f"Predicted: {yhat}, Actual: {y[i]}")
         time.sleep(0.05)
@@ -44,17 +57,31 @@ def train_model(source_data_csv: str, dest_artifact: str):
 
 if __name__ == '__main__':
 
-    logging.info(f" Iris::main")
+    logging.info(f"TrainModelOperatormain")
 
-    if 'SOURCE_DATA_CSV' in os.environ and 'DEST_ARTIFACT' in os.environ:
+    required_env_vars = [
+        'TARGET_VARIABLE',
+        'SOURCE_DATA_CSV',
+        'DEST_ARTIFACT',
+        'TRAINING_KERNEL'
+    ]
 
+    if all([elem in os.environ for elem in required_env_vars]):
+
+        target_variable = os.environ['TARGET_VARIABLE']
         source_data_csv = os.environ['SOURCE_DATA_CSV']
         dest_artifact = os.environ['DEST_ARTIFACT']
+        training_kernel = os.environ['TRAINING_KERNEL']
 
-        train_model(source_data_csv, dest_artifact)
+        train_model(
+            target_variable,
+            training_kernel,
+            source_data_csv,
+            dest_artifact
+        )
 
     else:
 
-        logging.error("requires SOURCE_DATA_CSV and DEST_ARTIFACT env vars")
+        logging.error(f"usage: required environment variables: {', '.join(required_env_vars)}")
         for key in os.environ:
-            logging.info(f"{key}={os.environ.get(key)}")
+            logging.info(f"Env: {key}={os.environ.get(key)}")
