@@ -35,7 +35,7 @@ async def run_container(request):
     job_ocid = ocid()
 
     job_spec = {
-        'container': "iris-model:latest",
+        'container': "train-model:latest",
         'env': {
             'TARGET_VARIABLE': f'variety',
             'TRAINING_KERNEL': f'poly',  # linear/poly/rbf/sigmoid/precomputed

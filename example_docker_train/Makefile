@@ -1,6 +1,6 @@
 VERSION ?= latest
-IMAGE_NAME ?= iris-model
-CONTAINER_NAME ?= iris-model
+IMAGE_NAME ?= train-model
+CONTAINER_NAME ?= train-model
 
 .PHONY: build test clean
 

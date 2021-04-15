@@ -48,10 +48,9 @@ def train_model(
     dump_file = dump(clf, dest_artifact)
     logging.info(f"TrainModelOperatortrain_model created {dump_file}")
 
-    for i, row in enumerate(X.sample(n=15).values):
+    for i, row in enumerate(X.values):
         yhat = clf.predict(row.reshape(1, -1))[0]
         logging.info(f"Predicted: {yhat}, Actual: {y[i]}")
-        time.sleep(0.05)
 
     logging.info("training complete")
 
