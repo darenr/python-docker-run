@@ -14,18 +14,24 @@ pip install -r requirements.txt -U
 
 ## Docker
 
+`cd example_docker_train`
+
 - build:
 
   ```bash
-  docker build -f Dockerfile -t iris-model:latest .
+  make build
   ```
 
 - test:
 
   ```bash
-    docker run -e iris.csv iris-model:latest
+    make test
   ```
 
-## Run the runner
+## Run the server
 
-python runner.py
+`./run.sh`
+
+or
+
+`uvicorn --reload app:app`

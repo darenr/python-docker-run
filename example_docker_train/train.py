@@ -42,15 +42,20 @@ def train_model(
     clf = SVC(kernel=training_kernel)
     clf.fit(X, y)
 
+    time.sleep(1.5)
+
     for param, value in clf.get_params(deep=True).items():
         logging.info(f"model parameter: {param} -> {value}")
 
     dump_file = dump(clf, dest_artifact)
     logging.info(f"TrainModelOperatortrain_model created {dump_file}")
 
+    time.sleep(1.5)
+
     for i, row in enumerate(X.values):
         yhat = clf.predict(row.reshape(1, -1))[0]
         logging.info(f"Predicted: {yhat}, Actual: {y[i]}")
+        time.sleep(0.02)
 
     logging.info("training complete")
 
