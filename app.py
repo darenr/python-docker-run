@@ -19,8 +19,10 @@ def ocid() -> str:
 
 
 async def container_log_output(container):
+    yield 'Output:\n'
+
     for line in container.logs(stream=True):
-        yield line.decode('utf-8').strip() + "\n"
+        yield line.decode('utf-8').strip() + '\n'
 
 
 async def list_containers(request):
@@ -29,6 +31,19 @@ async def list_containers(request):
         results.append(container.short_id)
 
     return JSONResponse(results)
+
+
+async def run_hello_world(request):
+
+    container = client.containers.run(
+        image='hello-world',
+        detach=True
+    )
+
+    return StreamingResponse(
+        container_log_output(container),
+        media_type='text/plain'
+    )
 
 
 async def run_container(request):
@@ -53,16 +68,22 @@ async def run_container(request):
             }
         },
         environment=job_spec['env'],
+        stdout=True,
+        stderr=True,
         detach=True
     )
 
-    return StreamingResponse(container_log_output(container), media_type='text/plain')
+    return StreamingResponse(
+        container_log_output(container),
+        media_type='text/plain'
+    )
 
 
 app = Starlette(
     debug=True,
     routes=[
         Route('/containers', list_containers),
-        Route('/job', run_container)
+        Route('/job', run_container),
+        Route('/hello', run_hello_world),
     ]
 )

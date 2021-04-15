@@ -7,6 +7,8 @@ uses: https://github.com/docker/docker-py
 
 ## Development
 
+You can pick Python 3.7/3.8 or 3.9, this is independent of the jobs runtime
+
 ```bash
 conda create -y --name dockerrunner python=3.8
 conda activate dockerrunner

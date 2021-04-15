@@ -7,6 +7,7 @@ from __future__ import print_function
 import pandas as pd
 from sklearn.svm import SVC
 from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import accuracy_score
 from joblib import dump
 import os
 import logging
@@ -36,12 +37,19 @@ def train_model(
 
     logging.info(f"TrainModelOperatortrain_model dataset, rows: [{len(df)}]")
 
-    y = LabelEncoder().fit_transform(df[target_variable])
+    le = LabelEncoder()
+    y = le.fit_transform(df[target_variable])
     X = df.drop([target_variable], axis=1)
 
     logging.info(f"TrainModelOperatortrain_model begin training...")
 
-    clf = SVC(kernel=training_kernel, verbose=True)
+    clf = SVC(
+        kernel=training_kernel,
+        verbose=True,
+        probability=True,
+        random_state=42
+    )
+
     clf.fit(X, y)
 
     for param, value in clf.get_params(deep=True).items():
@@ -54,6 +62,10 @@ def train_model(
         yhat = clf.predict(row.reshape(1, -1))[0]
         actual = y[i]
         logging.info(f"Actual: {actual}, Predicted: {yhat}, Correct: {yhat==actual}")
+
+
+    accuracy = accuracy_score(y, clf.predict(X))
+    logging.info(f"accuracy_score: {accuracy}")
 
     logging.info("training complete!")
 
