@@ -8,7 +8,9 @@ import pandas as pd
 from sklearn.svm import SVC
 from sklearn.preprocessing import LabelEncoder
 from joblib import dump
-import os, logging, time
+import os
+import logging
+import time
 
 #
 # requires two options:
@@ -22,11 +24,11 @@ logging.basicConfig(
 
 
 def train_model(
-        target_variable: str,
-        training_kernel: str,
-        source_data_csv: str,
-        dest_artifact: str
-    ):
+    target_variable: str,
+    training_kernel: str,
+    source_data_csv: str,
+    dest_artifact: str
+):
 
     logging.info(f"TrainModelOperatortrain_model reading dataset [{source_data_csv}]")
 
@@ -39,25 +41,22 @@ def train_model(
 
     logging.info(f"TrainModelOperatortrain_model begin training...")
 
-    clf = SVC(kernel=training_kernel)
+    clf = SVC(kernel=training_kernel, verbose=True)
     clf.fit(X, y)
 
-    time.sleep(1.5)
-
     for param, value in clf.get_params(deep=True).items():
-        logging.info(f"model parameter: {param} -> {value}")
+        logging.info(f"model parameter: {param}={value}")
 
     dump_file = dump(clf, dest_artifact)
     logging.info(f"TrainModelOperatortrain_model created {dump_file}")
 
-    time.sleep(1.5)
-
     for i, row in enumerate(X.values):
         yhat = clf.predict(row.reshape(1, -1))[0]
-        logging.info(f"Predicted: {yhat}, Actual: {y[i]}")
-        time.sleep(0.02)
+        actual = y[i]
+        logging.info(f"Actual: {actual}, Predicted: {yhat}, Correct: {yhat==actual}")
 
-    logging.info("training complete")
+    logging.info("training complete!")
+
 
 if __name__ == '__main__':
 
