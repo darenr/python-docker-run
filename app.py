@@ -55,7 +55,7 @@ async def run_container(request):
             'TARGET_VARIABLE': f'variety',
             'TRAINING_KERNEL': f'poly',  # linear/poly/rbf/sigmoid/precomputed
             'SOURCE_DATA_CSV': f'https://raw.githubusercontent.com/darenr/public_datasets/master/iris_dataset.csv',
-            'DEST_ARTIFACT':   f'/mnt/tmp/model-{job_ocid}.joblib'
+            'DEST_ARTIFACT':   f'/tmp/model-{job_ocid}.joblib'
         }
     }
 
@@ -63,7 +63,7 @@ async def run_container(request):
         image=job_spec['container'],
         volumes={
             f'{os.getcwd()}/tmp/': {
-                'bind': '/mnt/tmp',
+                'bind': '/tmp',
                 'mode': 'rw'
             }
         },
