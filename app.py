@@ -6,12 +6,79 @@ from starlette.responses import (
 
 from starlette.routing import Route
 
+import subprocess
+import tempfile
+
 import docker
 import asyncio
 import os
 import uuid
 
+from jinja2 import Template
+
+bash_runner_template = '''
+#!/bin/bash
+eval "$(conda shell.bash hook)"
+conda activate "{{ conda_environment }}"
+
+{% for e in environment_variables %}
+export {{e[0]}}="{{e[1]}}"
+{% endfor %}
+
+python - <<'EOF'
+{{ script | safe }}
+'EOF'
+
+'''
+
+
 client = docker.from_env()
+
+def make_executable(path):
+    mode = os.stat(path).st_mode
+    mode |= (mode & 0o444) >> 2    # copy R bits to X
+    os.chmod(path, mode)
+
+async def run_script_in_existing_environment(request):
+    job_ocid = ocid()
+
+    job_spec = {
+        'conda_environment': "pyk8s",
+        'script': open('example_scripts/ex1_script.py').read(),
+        'env': {
+            'MODULES': 'flask joblib scipy'
+        }
+    }
+
+    # make bash script
+    bash_file = f'{os.getcwd()}/tmp/job-{job_ocid}.sh'
+    with open(bash_file, "w") as fp:
+        print(Template(bash_runner_template).render(
+            conda_environment=job_spec['conda_environment'],
+            script=job_spec['script'],
+            environment_variables=job_spec['env'].items(),
+        ), file=fp)
+
+    make_executable(bash_file)
+
+    result = subprocess.run(
+        ['/bin/bash', bash_file],
+        stdout=subprocess.PIPE
+    )
+
+    def script_generator(result):
+        yield result.stdout
+
+    return StreamingResponse(
+        script_generator(result),
+        media_type='text/plain'
+    )
+
+async def run_script_in_new_environment(request):
+    job_ocid = ocid()
+
+    # conda create --name environmentName python=3 pandas numpy
+
 
 
 def ocid() -> str:
@@ -23,14 +90,6 @@ async def container_log_output(container):
 
     for line in container.logs(stream=True):
         yield line.decode('utf-8').strip() + '\n'
-
-
-async def list_containers(request):
-    results = []
-    for container in client.containers.list():
-        results.append(container.short_id)
-
-    return JSONResponse(results)
 
 
 async def run_hello_world(request):
@@ -45,8 +104,7 @@ async def run_hello_world(request):
         media_type='text/plain'
     )
 
-
-async def run_container(request):
+async def container_job(request):
     job_ocid = ocid()
 
     job_spec = {
@@ -82,8 +140,9 @@ async def run_container(request):
 app = Starlette(
     debug=True,
     routes=[
-        Route('/containers', list_containers),
-        Route('/job', run_container),
         Route('/hello', run_hello_world),
+        Route('/container_job', container_job),
+        Route('/run_script_in_existing_environment', run_script_in_existing_environment),
+        Route('/run_script_in_new_environment', run_script_in_new_environment),
     ]
 )
