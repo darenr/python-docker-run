@@ -1,11 +1,11 @@
 #
-# API to connect to an run a containerized job
+# API to connect to an run a job
 #
 
 from jobs import job_factory
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
 
 
     container_job = job_factory \

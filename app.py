@@ -7,12 +7,12 @@ from starlette.responses import (
 from starlette.routing import Route
 
 import subprocess
-import tempfile
 
 import docker
 import asyncio
 import os
 import uuid
+import json
 
 from jinja2 import Template
 
@@ -34,21 +34,16 @@ python - <<'EOF'
 
 client = docker.from_env()
 
+jobs = {} # key is ocid, value is job spec
+
 def make_executable(path):
     mode = os.stat(path).st_mode
     mode |= (mode & 0o444) >> 2    # copy R bits to X
     os.chmod(path, mode)
 
-async def run_script_in_existing_environment(request):
-    job_ocid = ocid()
+def run_script_in_existing_environment(job_ocid, job_spec):
 
-    job_spec = {
-        'conda_environment': "pyk8s",
-        'script': open('example_scripts/ex1_script.py').read(),
-        'env': {
-            'MODULES': 'flask joblib scipy'
-        }
-    }
+    print(json.dumps(job_spec, indent=2))
 
     # make bash script
     bash_file = f'{os.getcwd()}/tmp/job-{job_ocid}.sh'
@@ -74,48 +69,17 @@ async def run_script_in_existing_environment(request):
         media_type='text/plain'
     )
 
-async def run_script_in_new_environment(request):
-    job_ocid = ocid()
-
-    # conda create --name environmentName python=3 pandas numpy
-
-
-
 def ocid() -> str:
     return str(uuid.uuid1())
 
 
-async def container_log_output(container):
-    yield 'Output:\n'
-
+def container_log_output(container):
     for line in container.logs(stream=True):
         yield line.decode('utf-8').strip() + '\n'
 
+def container_job(job_ocid, job_spec):
 
-async def run_hello_world(request):
-
-    container = client.containers.run(
-        image='hello-world',
-        detach=True
-    )
-
-    return StreamingResponse(
-        container_log_output(container),
-        media_type='text/plain'
-    )
-
-async def container_job(request):
-    job_ocid = ocid()
-
-    job_spec = {
-        'container': "train-model:latest",
-        'env': {
-            'TARGET_VARIABLE': f'variety',
-            'TRAINING_KERNEL': f'poly',  # linear/poly/rbf/sigmoid/precomputed
-            'SOURCE_DATA_CSV': f'https://raw.githubusercontent.com/darenr/public_datasets/master/iris_dataset.csv',
-            'DEST_ARTIFACT':   f'/tmp/model-{job_ocid}.joblib'
-        }
-    }
+    print(json.dumps(job_spec, indent=2))
 
     container = client.containers.run(
         image=job_spec['container'],
@@ -136,13 +100,41 @@ async def container_job(request):
         media_type='text/plain'
     )
 
+async def create_job(request):
+    job_ocid = ocid()
+
+    j = await request.json()
+
+    jobs[job_ocid] = {
+        'runtime': j['runtime'],
+        'job_spec': json.loads(Template(json.dumps(j['job_spec'])).render(job_ocid=job_ocid))
+    }
+
+    return JSONResponse({
+        'job_ocid': job_ocid
+    })
+
+
+async def run_job(request):
+    j = await request.json()
+    job_ocid = j['job_ocid']
+
+    if job_ocid in jobs:
+        job = jobs[job_ocid]
+
+        runtime = job['runtime']
+        job_spec = job['job_spec']
+
+        if runtime == 'container':
+            return container_job(job_ocid, job_spec)
+        elif runtime == 'script':
+            return run_script_in_existing_environment(job_ocid, job_spec)
+
 
 app = Starlette(
     debug=True,
     routes=[
-        Route('/hello', run_hello_world),
-        Route('/container_job', container_job),
-        Route('/run_script_in_existing_environment', run_script_in_existing_environment),
-        Route('/run_script_in_new_environment', run_script_in_new_environment),
+        Route('/run_job', run_job),
+        Route('/create_job', create_job)
     ]
 )
