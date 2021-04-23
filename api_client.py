@@ -6,7 +6,7 @@ from jobs.job_factory import Job
 
 if __name__ == "__main__":
 
-    job = Job.create_job(Job.ENGINE_TYPE_ODSC, Job.ENGINE_RUNTIME_CONTAINER) \
+    job = Job.create_container_job(Job.ENGINE_TYPE_ODSC) \
            .runtime.image("train-model:latest") \
            .runtime.config({
                "kernel_memory": "16m",

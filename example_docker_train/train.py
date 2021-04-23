@@ -100,3 +100,5 @@ if __name__ == '__main__':
         logging.error(f"usage: required environment variables: {', '.join(required_env_vars)}")
         for key in os.environ:
             logging.info(f"Env: {key}={os.environ.get(key)}")
+
+    print("ALL DONE")

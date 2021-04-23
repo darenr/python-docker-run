@@ -13,6 +13,7 @@ class Job:
     ENGINE_TYPE_ODSC = "odsc"
     ENGINE_RUNTIME_CONTAINER = "container"
     ENGINE_RUNTIME_PYTHON = "python"
+    ENGINE_RUNTIME_DATAFLOW = "dataflow"
 
     class ContainerRuntime:
 
@@ -89,7 +90,7 @@ class Job:
                 self.job_runtime = Job.PythonRuntime(self)
             else:
                 raise ValueError(
-                    f"Use `runtime_type` must be one of [{', '.join([Job.ENGINE_RUNTIME_CONTAINER,Job.ENGINE_RUNTIME_PYTHON ])}]"
+                    f"Runtime [{runtime_type}] not yet supported"
                 )
 
         self.job_ocid = -1
@@ -129,9 +130,16 @@ class Job:
         )
 
     @classmethod
-    def create_job(self, engine: str, runtime_type: str):
+    def create_container_job(self, engine: str):
+        return Job(engine, Job.ENGINE_RUNTIME_CONTAINER, secret=__SECRET__)
 
-        return Job(engine, runtime_type, secret=__SECRET__)
+    @classmethod
+    def create_python_job(self, engine: str):
+        return Job(engine, Job.ENGINE_RUNTIME_PYTHON, secret=__SECRET__)
+
+    @classmethod
+    def create_dataflow_job(self, engine: str):
+        return Job(engine, Job.ENGINE_RUNTIME_DATAFLOW, secret=__SECRET__)
 
 
 class JobConsole:
