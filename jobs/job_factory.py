@@ -78,7 +78,7 @@ class Job:
     def __init__(self, engine: str, runtime_type: str, secret):
 
         if secret != __SECRET__:
-            raise ValueError("Use `create_job` instead.")
+            raise ValueError("Use `create_(container|python|dataflow)_job` instead.")
         else:
             self.engine = engine
             self.runtime_type = runtime_type
