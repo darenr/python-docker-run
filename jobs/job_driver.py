@@ -1,4 +1,6 @@
 
+from .__version__ import __version__, __cakes__
+from jinja2 import Template
 import subprocess
 
 import docker
@@ -6,10 +8,12 @@ import asyncio
 import os
 import uuid
 import json
+import logging
 
-from jinja2 import Template
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(processName)s::%(relativeCreated)6d %(threadName)s %(message)s')
 
-from .__version__ import __version__, __cakes__
 
 bash_runner_template = """
 #!/bin/bash
@@ -27,10 +31,15 @@ python - <<'EOF'
 """
 
 
+logging.info(f"initializing docker connection...")
 
 client = docker.from_env()
 
+
+logging.info(f"initializing jobs database...")
+
 jobs = {}  # key is ocid, value is job spec
+
 
 def generate_ocid() -> str:
     return str(uuid.uuid1())
@@ -44,12 +53,10 @@ def make_executable(path):
 
 def container_log_output(container):
     for line in container.logs(stream=True):
-        yield line.decode("utf-8").strip() + "\n"
+        yield line.decode("utf-8").strip()
 
 
 def run_script_in_existing_environment(job_ocid, job_spec):
-
-    print(json.dumps(job_spec, indent=2))
 
     # make bash script
     bash_file = f"{os.getcwd()}/tmp/job-{job_ocid}.sh"
@@ -69,14 +76,12 @@ def run_script_in_existing_environment(job_ocid, job_spec):
     result = subprocess.run(["/bin/bash", bash_file], stdout=subprocess.PIPE)
 
     def script_generator(result):
-        yield result.stdout
+        yield result.stdout.decode("utf-8").strip()
 
     return script_generator(result)
 
 
 def run_container_job(job_ocid, job_spec):
-
-    print(json.dumps(job_spec, indent=2))
 
     container = client.containers.run(
         **job_spec,
@@ -92,6 +97,8 @@ def run_container_job(job_ocid, job_spec):
 def create_job(runtime, job_spec):
     job_ocid = generate_ocid()
 
+    logging.info(f"create_job: [{runtime}, ocid: {job_ocid}]")
+
     jobs[job_ocid] = {
         "runtime": runtime,
         "job_spec": json.loads(
@@ -103,9 +110,12 @@ def create_job(runtime, job_spec):
         ),
     }
 
-    return job_ocid, 'ACCEPTED'
+    return job_ocid
+
 
 def run_job(job_ocid: str):
+
+    logging.info(f"run_job: [{job_ocid}]: {job_ocid in jobs}")
 
     if not job_ocid in jobs:
         raise ValueError(f"Job {job_ocid} not found")

@@ -16,11 +16,10 @@ async def proxy_create_job(request):
 
     j = await request.json()
 
-    job_ocid, status = create_job(j["runtime"], j["job_spec"])
+    job_ocid = create_job(j["runtime"], j["job_spec"])
 
     return JSONResponse({
-        "job_ocid": job_ocid,
-        "status": status
+        "job_ocid": job_ocid
     })
 
 

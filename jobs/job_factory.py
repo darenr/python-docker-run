@@ -1,16 +1,20 @@
-import requests
 import os
 
 from typing import List, Set, Dict, Tuple, Optional, Type
 
-__SECRET__ = object()
+from .job_driver import create_job as inproc_create_job
+from .job_driver import run_job as inproc_run_job
 
-url_base = "http://localhost:8000"
+from .client_job import create_job as remote_create_job
+from .client_job import run_job as remote_run_job
+
+__SECRET__ = object()
 
 
 class Job:
 
-    ENGINE_TYPE_ODSC = "odsc"
+    ENGINE_TYPE_INPROC = "inproc"
+    ENGINE_TYPE_REMOTE = "remote"
     ENGINE_RUNTIME_CONTAINER = "container"
     ENGINE_RUNTIME_PYTHON = "python"
     ENGINE_RUNTIME_DATAFLOW = "dataflow"
@@ -60,7 +64,7 @@ class Job:
 
             return self.parent_job
 
-        def conda(self, conda_name: str):
+        def conda_environment(self, conda_name: str):
             self.conda_name = conda_name
             return self.parent_job
 
@@ -69,7 +73,6 @@ class Job:
             return self.parent_job
 
         def _job_spec(self):
-
             return {"conda_environment": self.conda_name, "script": self.script}
 
         def __repr__(self) -> str:
@@ -114,20 +117,30 @@ class Job:
         job_spec = self.runtime._job_spec()
         job_spec["environment"] = self.job_environment
 
-        result = requests.get(
-            f"{url_base}/create_job",
-            json={"runtime": self.runtime_type, "job_spec": job_spec},
-        )
+        if self.engine == Job.ENGINE_TYPE_INPROC:
+            self.job_ocid = inproc_create_job(self.runtime_type, job_spec)
 
-        self.job_ocid = result.json()["job_ocid"]
+        elif self.engine == Job.ENGINE_TYPE_REMOTE:
+            self.job_ocid = remote_create_job(self.runtime_type, job_spec)
+
+        else:
+            raise ValueError(f"\"{self.engine}\" not supported, use one of: [{ENGINE_TYPE_INPROC}, {ENGINE_TYPE_REMOTE}]")
 
         return self
 
     def run(self):
 
-        return JobConsole(
-            requests.get(f"{url_base}/run_job", json={"job_ocid": self.job_ocid})
-        )
+        if self.engine == Job.ENGINE_TYPE_INPROC:
+            return InProcJobConsole(
+                inproc_run_job(self.job_ocid)
+            )
+
+        elif self.engine == Job.ENGINE_TYPE_REMOTE:
+            return RemoteJobConsole(
+                remote_run_job(self.job_ocid)
+            )
+        else:
+            raise ValueError(f"\"{self.engine}\" not supported, use one of: [{ENGINE_TYPE_INPROC}, {ENGINE_TYPE_REMOTE}]")
 
     @classmethod
     def create_container_job(self, engine: str):
@@ -142,13 +155,19 @@ class Job:
         return Job(engine, Job.ENGINE_RUNTIME_DATAFLOW, secret=__SECRET__)
 
 
-class JobConsole:
+class InProcJobConsole:
+    def __init__(self, g):
+        self.g = g
+
+    def watch(self):
+        for line in self.g:
+            print(line)
+
+
+class RemoteJobConsole:
     def __init__(self, r):
         self.r = r
 
     def watch(self):
-        if self.r.status_code == requests.codes.ok:
-            for line in self.r.content.splitlines():
-                print(line.decode("utf-8").strip())
-        else:
-            self.r.raise_for_status()
+        for line in self.r.content.splitlines():
+            print(line)
