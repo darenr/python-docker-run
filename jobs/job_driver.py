@@ -1,7 +1,3 @@
-from starlette.applications import Starlette
-from starlette.responses import JSONResponse, StreamingResponse
-
-from starlette.routing import Route
 
 import subprocess
 
@@ -12,6 +8,8 @@ import uuid
 import json
 
 from jinja2 import Template
+
+from .__version__ import __version__, __cakes__
 
 bash_runner_template = """
 #!/bin/bash
@@ -29,15 +27,24 @@ python - <<'EOF'
 """
 
 
+
 client = docker.from_env()
 
 jobs = {}  # key is ocid, value is job spec
+
+def generate_ocid() -> str:
+    return str(uuid.uuid1())
 
 
 def make_executable(path):
     mode = os.stat(path).st_mode
     mode |= (mode & 0o444) >> 2  # copy R bits to X
     os.chmod(path, mode)
+
+
+def container_log_output(container):
+    for line in container.logs(stream=True):
+        yield line.decode("utf-8").strip() + "\n"
 
 
 def run_script_in_existing_environment(job_ocid, job_spec):
@@ -52,6 +59,7 @@ def run_script_in_existing_environment(job_ocid, job_spec):
                 conda_environment=job_spec["conda_environment"],
                 script=job_spec["script"],
                 environment_variables=job_spec["environment"].items(),
+                version=__version__,
             ),
             file=fp,
         )
@@ -63,19 +71,10 @@ def run_script_in_existing_environment(job_ocid, job_spec):
     def script_generator(result):
         yield result.stdout
 
-    return StreamingResponse(script_generator(result), media_type="text/plain")
+    return script_generator(result)
 
 
-def ocid() -> str:
-    return str(uuid.uuid1())
-
-
-def container_log_output(container):
-    for line in container.logs(stream=True):
-        yield line.decode("utf-8").strip() + "\n"
-
-
-def container_job(job_ocid, job_spec):
+def run_container_job(job_ocid, job_spec):
 
     print(json.dumps(job_spec, indent=2))
 
@@ -87,48 +86,35 @@ def container_job(job_ocid, job_spec):
         detach=True,
     )
 
-    return StreamingResponse(container_log_output(container), media_type="text/plain")
+    return container_log_output(container)
 
 
-async def create_job(request):
-    job_ocid = ocid()
-
-    j = await request.json()
+def create_job(runtime, job_spec):
+    job_ocid = generate_ocid()
 
     jobs[job_ocid] = {
-        "runtime": j["runtime"],
+        "runtime": runtime,
         "job_spec": json.loads(
-            Template(json.dumps(j["job_spec"])).render(
-                OCID=job_ocid
+            Template(json.dumps(job_spec)).render(
+                OCID=job_ocid,
+                job_spec=job_spec,
+                version=__version__,
             )
         ),
     }
 
-    return JSONResponse({"job_ocid": job_ocid})
+    return job_ocid, 'ACCEPTED'
 
+def run_job(job_ocid: str):
 
-async def run_job(request):
-    j = await request.json()
-    job_ocid = j["job_ocid"]
+    if not job_ocid in jobs:
+        raise ValueError(f"Job {job_ocid} not found")
 
-    if job_ocid in jobs:
-        job = jobs[job_ocid]
+    job = jobs[job_ocid]
 
-        runtime = job["runtime"]
-        job_spec = job["job_spec"]
-
-        if runtime == "container":
-            return container_job(job_ocid, job_spec)
-        elif runtime == "script":
-            return run_script_in_existing_environment(job_ocid, job_spec)
-
-
-# fmt: off
-app = Starlette(
-    debug=True,
-    routes=[
-        Route('/run_job', run_job),
-        Route('/create_job', create_job)
-    ]
-)
-# fmt: on
+    if job['runtime'] == "container":
+        return run_container_job(job_ocid, job['job_spec'])
+    elif job['runtime'] == "python":
+        return run_script_in_existing_environment(job_ocid, job['job_spec'])
+    else:
+        raise ValueError(f"Job {job_ocid} found, but not driver for \"{job['runtime']}\" runtime")
