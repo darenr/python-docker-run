@@ -48,7 +48,7 @@ start web app: `./run.sh`
 
 *OR* to not run the web app and skip remote tests:
 
-`python -m pytest -v tests -k 'not remote'``
+`python -m pytest -v tests -k 'not remote'`
 
 ## TODO
 
