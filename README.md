@@ -40,10 +40,20 @@ or
 
 `uvicorn --reload app:app`
 
+## TESTS
+
+start web app: `./run.sh`
+
+`python -m pytest -v tests`
+
+*OR* to not run the web app and skip remote tests:
+
+`python -m pytest -v tests -k 'not remote'``
+
 ## TODO
 
-  - break up API:
-    - job creation (takes in job spec, returns ID)
-    - job run (takes in ID, streams output)
-  - write client API code
+  - ~~break up API:~~
+    - ~~job creation (takes in job spec, returns ID)~~
+    - ~~job run (takes in ID, streams output)~~
+  - ~~write client API code~~
   - demo client API code in Jupyter Lab
