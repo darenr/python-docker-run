@@ -11,7 +11,7 @@ from .client_job import run_job as remote_run_job
 __SECRET__ = object()
 
 
-class Job:
+class Job(object):
 
     ENGINE_TYPE_INPROC = "inproc"
     ENGINE_TYPE_REMOTE = "remote"
@@ -19,7 +19,7 @@ class Job:
     ENGINE_RUNTIME_PYTHON = "python"
     ENGINE_RUNTIME_DATAFLOW = "dataflow"
 
-    class ContainerRuntime:
+    class ContainerRuntime(object):
 
         def __init__(self, parent_job):
             self.parent_job = parent_job
@@ -47,7 +47,7 @@ class Job:
         def __repr__(self) -> str:
             return f"ContainerRuntime:: {self.runtime_image}"
 
-    class PythonRuntime:
+    class PythonRuntime(object):
 
         def __init__(self, parent_job):
             self.parent_job = parent_job
@@ -57,6 +57,8 @@ class Job:
 
         def script_from_string(self, script_block: str):
             self.script = script_block
+
+            return self.parent_job
 
         def script_from_file(self, script_filename: str):
             with open(script_filename, "r") as fin:
@@ -78,6 +80,18 @@ class Job:
         def __repr__(self) -> str:
             return f"PythonRuntime:: {self.script_name}::{self.conda_name}"
 
+    class PySparkRuntime(PythonRuntime):
+
+        def __init__(self, parent_job):
+            super().__init__(parent_job)
+            self.conda_name = "pyspark2.4"
+
+        def _job_spec(self):
+            return {"conda_environment": self.conda_name, "script": self.script}
+
+        def __repr__(self) -> str:
+            return f"PySparkRuntime:: {self.script_name}::{self.conda_name}"
+
     def __init__(self, engine: str, runtime_type: str, secret):
 
         if secret != __SECRET__:
@@ -91,6 +105,8 @@ class Job:
                 self.job_runtime = Job.ContainerRuntime(self)
             elif runtime_type == Job.ENGINE_RUNTIME_PYTHON:
                 self.job_runtime = Job.PythonRuntime(self)
+            elif runtime_type == Job.ENGINE_RUNTIME_DATAFLOW:
+                self.job_runtime = Job.PySparkRuntime(self)
             else:
                 raise ValueError(
                     f"Runtime [{runtime_type}] not yet supported"

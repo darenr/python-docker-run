@@ -50,6 +50,14 @@ start web app: `./run.sh`
 
 `python -m pytest -v tests -k 'not remote'`
 
+## To use the PySparkRuntime you need to create a conda env, using
+
+```bash
+conda create -y --name pyspark2.4 python=3.7
+conda activate pyspark2.4
+conda install -y -c conda-forge/label/cf202003 pyspark # Pyspark 2.4.5
+```
+
 ## TODO
 
   - ~~break up API:~~

@@ -15,7 +15,7 @@ logging.basicConfig(
     format='%(processName)s::%(relativeCreated)6d %(threadName)s %(message)s')
 
 
-bash_runner_template = """
+bash_python_runner_template = """
 #!/bin/bash
 eval "$(conda shell.bash hook)"
 conda activate "{{ conda_environment }}"
@@ -30,9 +30,20 @@ python - <<'EOF'
 
 """
 
+bash_pyspark_runner_template = """
+#!/bin/bash
+eval "$(conda shell.bash hook)"
+conda activate "{{ conda_environment }}"
+
+{% for e in environment_variables %}
+export {{e[0]}}="{{e[1]}}"
+{% endfor %}
+
+spark-submit "{{script_file | safe}}"
+
+"""
 
 logging.info(f"initializing docker connection...")
-
 client = docker.from_env()
 
 
@@ -62,11 +73,42 @@ def run_script_in_existing_environment(job_ocid, job_spec):
     bash_file = f"{os.getcwd()}/tmp/job-{job_ocid}.sh"
     with open(bash_file, "w") as fp:
         print(
-            Template(bash_runner_template).render(
+            Template(bash_python_runner_template).render(
                 conda_environment=job_spec["conda_environment"],
                 script=job_spec["script"],
                 environment_variables=job_spec["environment"].items(),
                 version=__version__,
+            ),
+            file=fp,
+        )
+
+    make_executable(bash_file)
+
+    result = subprocess.run(["/bin/bash", bash_file], stdout=subprocess.PIPE)
+
+    def script_generator(result):
+        yield result.stdout.decode("utf-8").strip()
+
+    return script_generator(result)
+
+
+def run_pyspark(job_ocid, job_spec):
+
+    # write script to a file for submitting...
+    script_file = f"{os.getcwd()}/tmp/job-{job_ocid}.py"
+    with open(script_file, "w") as fp:
+        print(job_spec["script"], file=fp)
+
+    # make bash script
+    bash_file = f"{os.getcwd()}/tmp/job-{job_ocid}.sh"
+    with open(bash_file, "w") as fp:
+        print(
+            Template(bash_pyspark_runner_template).render(
+                conda_environment=job_spec["conda_environment"],
+                environment_variables=job_spec["environment"].items(),
+                version=__version__,
+                script_file=script_file,
+                job_ocid=job_ocid
             ),
             file=fp,
         )
@@ -126,5 +168,7 @@ def run_job(job_ocid: str):
         return run_container_job(job_ocid, job['job_spec'])
     elif job['runtime'] == "python":
         return run_script_in_existing_environment(job_ocid, job['job_spec'])
+    elif job['runtime'] == "dataflow":
+        return run_pyspark(job_ocid, job['job_spec'])
     else:
         raise ValueError(f"Job {job_ocid} found, but not driver for \"{job['runtime']}\" runtime")
