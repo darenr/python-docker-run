@@ -6,7 +6,8 @@ from jobs.job_factory import Job
 import sys
 import pytest
 
-sys.path.append('.')
+sys.path.append(".")
+
 
 def test_inproc_pyspark_script():
 
@@ -19,7 +20,7 @@ NUM_SAMPLES = int(os.environ.get("NUM_SAMPLES"))
 
 spark = SparkSession \
     .builder \
-    .appName("PySparkApp") \
+    .appName("PySparkTestApp") \
     .getOrCreate()
 
 sc = spark.sparkContext
@@ -37,11 +38,11 @@ print("*********************************************************")
 
     """
 
-    job = Job.create_dataflow_job(Job.ENGINE_TYPE_INPROC) \
-        .runtime.script_from_string(script) \
-        .environment({
-            "NUM_SAMPLES": 10000000
-        }) \
+    job = (
+        Job.create_dataflow_job(Job.ENGINE_TYPE_INPROC)
+        .runtime.script_from_string(script)
+        .environment({"NUM_SAMPLES": 10000000})
         .build()
+    )
 
     job.run().watch()
