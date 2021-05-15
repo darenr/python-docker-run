@@ -4,6 +4,6 @@ RUN mkdir /app
 WORKDIR /app
 COPY ./ ./
 
-RUN pip install -U -r requirements.txt 
+RUN pip install -U -r requirements.txt
 
 CMD ["python", "autosklearn_automl.py"]

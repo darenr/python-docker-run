@@ -20,7 +20,6 @@ class Job(object):
     ENGINE_RUNTIME_DATAFLOW = "dataflow"
 
     class ContainerRuntime(object):
-
         def __init__(self, parent_job):
             self.parent_job = parent_job
             self.runtime_image = None
@@ -38,9 +37,7 @@ class Job(object):
 
             assert self.runtime_image
 
-            job_spec = {
-                "image": self.runtime_image
-            }
+            job_spec = {"image": self.runtime_image}
 
             return {**job_spec, **self.runtime_config}  # merge dicts
 
@@ -48,7 +45,6 @@ class Job(object):
             return f"ContainerRuntime:: {self.runtime_image}"
 
     class PythonRuntime(object):
-
         def __init__(self, parent_job):
             self.parent_job = parent_job
             self.script_name = None
@@ -81,7 +77,6 @@ class Job(object):
             return f"PythonRuntime:: {self.script_name}::{self.conda_name}"
 
     class PySparkRuntime(PythonRuntime):
-
         def __init__(self, parent_job):
             super().__init__(parent_job)
             self.conda_name = "pyspark2.4"
@@ -108,9 +103,7 @@ class Job(object):
             elif runtime_type == Job.ENGINE_RUNTIME_DATAFLOW:
                 self.job_runtime = Job.PySparkRuntime(self)
             else:
-                raise ValueError(
-                    f"Runtime [{runtime_type}] not yet supported"
-                )
+                raise ValueError(f"Runtime [{runtime_type}] not yet supported")
 
         self.job_ocid = -1
 
@@ -140,23 +133,23 @@ class Job(object):
             self.job_ocid = remote_create_job(self.runtime_type, job_spec)
 
         else:
-            raise ValueError(f"\"{self.engine}\" not supported, use one of: [{ENGINE_TYPE_INPROC}, {ENGINE_TYPE_REMOTE}]")
+            raise ValueError(
+                f'"{self.engine}" not supported, use one of: [{ENGINE_TYPE_INPROC}, {ENGINE_TYPE_REMOTE}]'
+            )
 
         return self
 
     def run(self):
 
         if self.engine == Job.ENGINE_TYPE_INPROC:
-            return InProcJobConsole(
-                inproc_run_job(self.job_ocid)
-            )
+            return InProcJobConsole(inproc_run_job(self.job_ocid))
 
         elif self.engine == Job.ENGINE_TYPE_REMOTE:
-            return RemoteJobConsole(
-                remote_run_job(self.job_ocid)
-            )
+            return RemoteJobConsole(remote_run_job(self.job_ocid))
         else:
-            raise ValueError(f"\"{self.engine}\" not supported, use one of: [{ENGINE_TYPE_INPROC}, {ENGINE_TYPE_REMOTE}]")
+            raise ValueError(
+                f'"{self.engine}" not supported, use one of: [{ENGINE_TYPE_INPROC}, {ENGINE_TYPE_REMOTE}]'
+            )
 
     @classmethod
     def create_container_job(self, engine: str):

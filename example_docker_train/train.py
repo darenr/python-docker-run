@@ -21,14 +21,12 @@ import time
 
 logging.basicConfig(
     level=logging.DEBUG,
-    format='%(processName)s::%(relativeCreated)6d %(threadName)s %(message)s')
+    format="%(processName)s::%(relativeCreated)6d %(threadName)s %(message)s",
+)
 
 
 def train_model(
-    target_variable: str,
-    training_kernel: str,
-    source_data_csv: str,
-    dest_artifact: str
+    target_variable: str, training_kernel: str, source_data_csv: str, dest_artifact: str
 ):
 
     logging.info(f"TrainModelOperatortrain_model reading dataset [{source_data_csv}]")
@@ -43,12 +41,7 @@ def train_model(
 
     logging.info(f"TrainModelOperatortrain_model begin training...")
 
-    clf = SVC(
-        kernel=training_kernel,
-        verbose=True,
-        probability=True,
-        random_state=42
-    )
+    clf = SVC(kernel=training_kernel, verbose=True, probability=True, random_state=42)
 
     clf.fit(X, y)
 
@@ -63,41 +56,37 @@ def train_model(
         actual = y[i]
         logging.info(f"Actual: {actual}, Predicted: {yhat}, Correct: {yhat==actual}")
 
-
     accuracy = accuracy_score(y, clf.predict(X))
     logging.info(f"accuracy_score: {accuracy}")
 
     logging.info("training complete!")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     logging.info(f"TrainModelOperatormain")
 
     required_env_vars = [
-        'TARGET_VARIABLE',
-        'SOURCE_DATA_CSV',
-        'DEST_ARTIFACT',
-        'TRAINING_KERNEL'
+        "TARGET_VARIABLE",
+        "SOURCE_DATA_CSV",
+        "DEST_ARTIFACT",
+        "TRAINING_KERNEL",
     ]
 
     if all([elem in os.environ for elem in required_env_vars]):
 
-        target_variable = os.environ['TARGET_VARIABLE']
-        source_data_csv = os.environ['SOURCE_DATA_CSV']
-        dest_artifact = os.environ['DEST_ARTIFACT']
-        training_kernel = os.environ['TRAINING_KERNEL']
+        target_variable = os.environ["TARGET_VARIABLE"]
+        source_data_csv = os.environ["SOURCE_DATA_CSV"]
+        dest_artifact = os.environ["DEST_ARTIFACT"]
+        training_kernel = os.environ["TRAINING_KERNEL"]
 
-        train_model(
-            target_variable,
-            training_kernel,
-            source_data_csv,
-            dest_artifact
-        )
+        train_model(target_variable, training_kernel, source_data_csv, dest_artifact)
 
     else:
 
-        logging.error(f"usage: required environment variables: {', '.join(required_env_vars)}")
+        logging.error(
+            f"usage: required environment variables: {', '.join(required_env_vars)}"
+        )
         for key in os.environ:
             logging.info(f"Env: {key}={os.environ.get(key)}")
 
