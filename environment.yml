@@ -8,8 +8,9 @@ dependencies:
   - requests
   - jinja2
   - pre-commit
-  - pytest
-  - black
   - pip
   - pip:
     - docker
+    - jedi
+    - pytest
+    - black
