@@ -73,7 +73,7 @@ if __name__ == "__main__":
         "TRAINING_KERNEL",
     ]
 
-    if all([elem in os.environ for elem in required_env_vars]):
+    if all(elem in os.environ for elem in required_env_vars):
 
         target_variable = os.environ["TARGET_VARIABLE"]
         source_data_csv = os.environ["SOURCE_DATA_CSV"]
