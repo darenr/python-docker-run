@@ -23,6 +23,13 @@ pre-commit install
 
 ```
 
+## Pre-commit hooks
+
+By running `pre-commit install` this will install a hook to run a series of hooks
+on the changed files. To refresh the tool chain use `pre-commit autoupdate` and
+to force run on all files use `pre-commit run --all-files`
+
+
 ## Docker
 
 `cd example_docker_train`

@@ -168,7 +168,7 @@ def run_job(job_ocid: str):
         return run_container_job(job_ocid, job["job_spec"])
     elif job["runtime"] == "python":
         return run_script_in_existing_environment(job_ocid, job["job_spec"])
-    elif job["runtime"] == "dataflow":
+    elif job["runtime"] == "pyspark":
         return run_pyspark(job_ocid, job["job_spec"])
     else:
         raise ValueError(

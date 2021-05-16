@@ -39,7 +39,7 @@ print("*********************************************************")
     """
 
     job = (
-        Job.create_dataflow_job(Job.ENGINE_TYPE_INPROC)
+        Job.create_pyspark_job(Job.ENGINE_TYPE_INPROC)
         .runtime.script_from_string(script)
         .environment({"NUM_SAMPLES": 10000000})
         .build()

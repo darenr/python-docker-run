@@ -17,7 +17,7 @@ class Job(object):
     ENGINE_TYPE_REMOTE = "remote"
     ENGINE_RUNTIME_CONTAINER = "container"
     ENGINE_RUNTIME_PYTHON = "python"
-    ENGINE_RUNTIME_DATAFLOW = "dataflow"
+    ENGINE_RUNTIME_PYSPARK = "pyspark"
 
     class ContainerRuntime(object):
         def __init__(self, parent_job):
@@ -90,7 +90,7 @@ class Job(object):
     def __init__(self, engine: str, runtime_type: str, secret):
 
         if secret != __SECRET__:
-            raise ValueError("Use `create_(container|python|dataflow)_job` instead.")
+            raise ValueError("Use `create_(container|python|pyspark)_job` instead.")
         else:
             self.engine = engine
             self.runtime_type = runtime_type
@@ -100,7 +100,7 @@ class Job(object):
                 self.job_runtime = Job.ContainerRuntime(self)
             elif runtime_type == Job.ENGINE_RUNTIME_PYTHON:
                 self.job_runtime = Job.PythonRuntime(self)
-            elif runtime_type == Job.ENGINE_RUNTIME_DATAFLOW:
+            elif runtime_type == Job.ENGINE_RUNTIME_PYSPARK:
                 self.job_runtime = Job.PySparkRuntime(self)
             else:
                 raise ValueError(f"Runtime [{runtime_type}] not yet supported")
@@ -160,8 +160,8 @@ class Job(object):
         return Job(engine, Job.ENGINE_RUNTIME_PYTHON, secret=__SECRET__)
 
     @classmethod
-    def create_dataflow_job(self, engine: str):
-        return Job(engine, Job.ENGINE_RUNTIME_DATAFLOW, secret=__SECRET__)
+    def create_pyspark_job(self, engine: str):
+        return Job(engine, Job.ENGINE_RUNTIME_PYSPARK, secret=__SECRET__)
 
 
 class InProcJobConsole:
