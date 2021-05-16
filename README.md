@@ -12,13 +12,8 @@ uses: https://github.com/docker/docker-py
 You can pick Python 3.7/3.8 or 3.9, this is independent of the jobs runtime
 
 ```bash
-conda create -y --name dockerrunner python=3.8
+conda env create -f  environment.yml
 conda activate dockerrunner
-
-pip install -r requirements.txt -U
-
-pip install -r dev-requirements.txt -U
-
 pre-commit install
 
 ```

@@ -9,3 +9,4 @@ repos:
     rev: 21.5b1
     hooks:
     -   id: black
+        language: python
