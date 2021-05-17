@@ -7,14 +7,23 @@ uses: https://github.com/docker/docker-py
 
 ## Development
 
+
+
 You can pick Python 3.7/3.8 or 3.9, this is independent of the jobs runtime
 
 ```bash
-conda create -y --name dockerrunner python=3.8
+conda env create -f environment.yml
 conda activate dockerrunner
+pre-commit install
 
-pip install -r requirements.txt -U
 ```
+
+## Pre-commit hooks
+
+By running `pre-commit install` this will install a hook to run a series of hooks
+on the changed files. To refresh the tool chain use `pre-commit autoupdate` and
+to force run on all files use `pre-commit run --all-files`
+
 
 ## Docker
 

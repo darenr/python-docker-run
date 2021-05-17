@@ -1,6 +1,6 @@
-__title__ = 'jobs'
-__version__ = '1.0.1'
-__author__ = 'Daren Race'
-__author_email__ = 'daren.race@gmail.com'
-__license__ = 'MIT'
-__cakes__ = u'\u2728 \U0001f370  \U0001f370 \U0001f370\u2728'
+__title__ = "jobs"
+__version__ = "1.0.1"
+__author__ = "Daren Race"
+__author_email__ = "daren.race@gmail.com"
+__license__ = "MIT"
+__cakes__ = u"\u2728 \U0001f370  \U0001f370 \U0001f370\u2728"

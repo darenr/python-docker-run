@@ -1,4 +1,3 @@
-
 from .__version__ import __version__, __cakes__
 from jinja2 import Template
 import subprocess
@@ -12,7 +11,8 @@ import logging
 
 logging.basicConfig(
     level=logging.DEBUG,
-    format='%(processName)s::%(relativeCreated)6d %(threadName)s %(message)s')
+    format="%(processName)s::%(relativeCreated)6d %(threadName)s %(message)s",
+)
 
 
 bash_python_runner_template = """
@@ -108,7 +108,7 @@ def run_pyspark(job_ocid, job_spec):
                 environment_variables=job_spec["environment"].items(),
                 version=__version__,
                 script_file=script_file,
-                job_ocid=job_ocid
+                job_ocid=job_ocid,
             ),
             file=fp,
         )
@@ -164,11 +164,13 @@ def run_job(job_ocid: str):
 
     job = jobs[job_ocid]
 
-    if job['runtime'] == "container":
-        return run_container_job(job_ocid, job['job_spec'])
-    elif job['runtime'] == "python":
-        return run_script_in_existing_environment(job_ocid, job['job_spec'])
-    elif job['runtime'] == "dataflow":
-        return run_pyspark(job_ocid, job['job_spec'])
+    if job["runtime"] == "container":
+        return run_container_job(job_ocid, job["job_spec"])
+    elif job["runtime"] == "python":
+        return run_script_in_existing_environment(job_ocid, job["job_spec"])
+    elif job["runtime"] == "pyspark":
+        return run_pyspark(job_ocid, job["job_spec"])
     else:
-        raise ValueError(f"Job {job_ocid} found, but not driver for \"{job['runtime']}\" runtime")
+        raise ValueError(
+            f"Job {job_ocid} found, but not driver for \"{job['runtime']}\" runtime"
+        )

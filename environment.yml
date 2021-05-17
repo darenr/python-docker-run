@@ -1,0 +1,16 @@
+name: dockerrunner
+channels:
+  - conda-forge
+dependencies:
+  - python=3.8
+  - starlette
+  - uvicorn
+  - requests
+  - jinja2
+  - pre-commit
+  - pip
+  - pip:
+    - docker
+    - jedi
+    - pytest
+    - black

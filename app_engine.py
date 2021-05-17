@@ -1,8 +1,5 @@
 from starlette.applications import Starlette
-from starlette.responses import (
-    JSONResponse,
-    StreamingResponse
-)
+from starlette.responses import JSONResponse, StreamingResponse
 
 from starlette.routing import Route
 
@@ -18,9 +15,7 @@ async def proxy_create_job(request):
 
     job_ocid = create_job(j["runtime"], j["job_spec"])
 
-    return JSONResponse({
-        "job_ocid": job_ocid
-    })
+    return JSONResponse({"job_ocid": job_ocid})
 
 
 async def proxy_run_job(request):
@@ -28,10 +23,7 @@ async def proxy_run_job(request):
     job_ocid = j["job_ocid"]
 
     try:
-        return StreamingResponse(
-            run_job(job_ocid),
-            media_type="text/plain"
-        )
+        return StreamingResponse(run_job(job_ocid), media_type="text/plain")
 
     except ValueError as e:
         raise HTTPException(status_code, detail=e.message)

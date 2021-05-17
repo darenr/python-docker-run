@@ -1,5 +1,0 @@
-docker
-starlette
-uvicorn
-requests
-jinja2
