@@ -12,7 +12,7 @@ uses: https://github.com/docker/docker-py
 You can pick Python 3.7/3.8 or 3.9, this is independent of the jobs runtime
 
 ```bash
-conda env create -f  environment.yml
+conda env create -f environment.yml
 conda activate dockerrunner
 pre-commit install
 
