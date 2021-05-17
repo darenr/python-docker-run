@@ -9,10 +9,9 @@ def create_job(runtime, job_spec):
         json={"runtime": runtime, "job_spec": job_spec},
     )
 
-    return result.json()\
-     ["job_ocid"]
+    return result.json()["job_id"]
 
 
-def run_job(job_ocid: str):
+def run_job(job_id: str):
 
-    return requests.get(f"{url_base}/run_job", json={"job_ocid": job_ocid})
+    return requests.get(f"{url_base}/run_job", json={"job_id": job_id})

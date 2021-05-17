@@ -49,10 +49,10 @@ client = docker.from_env()
 
 logging.info(f"initializing jobs database...")
 
-jobs = {}  # key is ocid, value is job spec
+jobs = {}  # key is id, value is job spec
 
 
-def generate_ocid() -> str:
+def generate_id() -> str:
     return str(uuid.uuid1())
 
 
@@ -67,10 +67,10 @@ def container_log_output(container):
         yield line.decode("utf-8").strip()
 
 
-def run_script_in_existing_environment(job_ocid, job_spec):
+def run_script_in_existing_environment(job_id, job_spec):
 
     # make bash script
-    bash_file = f"{os.getcwd()}/tmp/job-{job_ocid}.sh"
+    bash_file = f"{os.getcwd()}/tmp/job-{job_id}.sh"
     with open(bash_file, "w") as fp:
         print(
             Template(bash_python_runner_template).render(
@@ -92,15 +92,15 @@ def run_script_in_existing_environment(job_ocid, job_spec):
     return script_generator(result)
 
 
-def run_pyspark(job_ocid, job_spec):
+def run_pyspark(job_id, job_spec):
 
     # write script to a file for submitting...
-    script_file = f"{os.getcwd()}/tmp/job-{job_ocid}.py"
+    script_file = f"{os.getcwd()}/tmp/job-{job_id}.py"
     with open(script_file, "w") as fp:
         print(job_spec["script"], file=fp)
 
     # make bash script
-    bash_file = f"{os.getcwd()}/tmp/job-{job_ocid}.sh"
+    bash_file = f"{os.getcwd()}/tmp/job-{job_id}.sh"
     with open(bash_file, "w") as fp:
         print(
             Template(bash_pyspark_runner_template).render(
@@ -108,7 +108,7 @@ def run_pyspark(job_ocid, job_spec):
                 environment_variables=job_spec["environment"].items(),
                 version=__version__,
                 script_file=script_file,
-                job_ocid=job_ocid,
+                job_id=job_id,
             ),
             file=fp,
         )
@@ -123,7 +123,7 @@ def run_pyspark(job_ocid, job_spec):
     return script_generator(result)
 
 
-def run_container_job(job_ocid, job_spec):
+def run_container_job(job_id, job_spec):
 
     container = client.containers.run(
         **job_spec,
@@ -137,40 +137,40 @@ def run_container_job(job_ocid, job_spec):
 
 
 def create_job(runtime, job_spec):
-    job_ocid = generate_ocid()
+    job_id = generate_id()
 
-    logging.info(f"create_job: [{runtime}, ocid: {job_ocid}]")
+    logging.info(f"create_job: [{runtime}, id: {job_id}]")
 
-    jobs[job_ocid] = {
+    jobs[job_id] = {
         "runtime": runtime,
         "job_spec": json.loads(
             Template(json.dumps(job_spec)).render(
-                OCID=job_ocid,
+                id=job_id,
                 job_spec=job_spec,
                 version=__version__,
             )
         ),
     }
 
-    return job_ocid
+    return job_id
 
 
-def run_job(job_ocid: str):
+def run_job(job_id: str):
 
-    logging.info(f"run_job: [{job_ocid}]: {job_ocid in jobs}")
+    logging.info(f"run_job: [{job_id}]: {job_id in jobs}")
 
-    if not job_ocid in jobs:
-        raise ValueError(f"Job {job_ocid} not found")
+    if not job_id in jobs:
+        raise ValueError(f"Job {job_id} not found")
 
-    job = jobs[job_ocid]
+    job = jobs[job_id]
 
     if job["runtime"] == "container":
-        return run_container_job(job_ocid, job["job_spec"])
+        return run_container_job(job_id, job["job_spec"])
     elif job["runtime"] == "python":
-        return run_script_in_existing_environment(job_ocid, job["job_spec"])
+        return run_script_in_existing_environment(job_id, job["job_spec"])
     elif job["runtime"] == "pyspark":
-        return run_pyspark(job_ocid, job["job_spec"])
+        return run_pyspark(job_id, job["job_spec"])
     else:
         raise ValueError(
-            f"Job {job_ocid} found, but not driver for \"{job['runtime']}\" runtime"
+            f"Job {job_id} found, but not driver for \"{job['runtime']}\" runtime"
         )

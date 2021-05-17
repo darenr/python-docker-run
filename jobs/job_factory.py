@@ -105,10 +105,10 @@ class Job(object):
             else:
                 raise ValueError(f"Runtime [{runtime_type}] not yet supported")
 
-        self.job_ocid = -1
+        self.job_id = -1
 
     def __repr__(self) -> str:
-        return f"JOB:: [{self.job_ocid}] {self.engine}::{self.job_runtime}"
+        return f"JOB:: [{self.job_id}] {self.engine}::{self.job_runtime}"
 
     @property
     def runtime(self):
@@ -119,7 +119,7 @@ class Job(object):
         return self
 
     def console(self):
-        return JobConsole(self.job_ocid)
+        return JobConsole(self.job_id)
 
     def build(self):
 
@@ -127,10 +127,10 @@ class Job(object):
         job_spec["environment"] = self.job_environment
 
         if self.engine == Job.ENGINE_TYPE_INPROC:
-            self.job_ocid = inproc_create_job(self.runtime_type, job_spec)
+            self.job_id = inproc_create_job(self.runtime_type, job_spec)
 
         elif self.engine == Job.ENGINE_TYPE_REMOTE:
-            self.job_ocid = remote_create_job(self.runtime_type, job_spec)
+            self.job_id = remote_create_job(self.runtime_type, job_spec)
 
         else:
             raise ValueError(
@@ -142,10 +142,10 @@ class Job(object):
     def run(self):
 
         if self.engine == Job.ENGINE_TYPE_INPROC:
-            return InProcJobConsole(inproc_run_job(self.job_ocid))
+            return InProcJobConsole(inproc_run_job(self.job_id))
 
         elif self.engine == Job.ENGINE_TYPE_REMOTE:
-            return RemoteJobConsole(remote_run_job(self.job_ocid))
+            return RemoteJobConsole(remote_run_job(self.job_id))
         else:
             raise ValueError(
                 f'"{self.engine}" not supported, use one of: [{ENGINE_TYPE_INPROC}, {ENGINE_TYPE_REMOTE}]'

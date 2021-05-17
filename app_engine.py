@@ -13,17 +13,17 @@ async def proxy_create_job(request):
 
     j = await request.json()
 
-    job_ocid = create_job(j["runtime"], j["job_spec"])
+    job_id = create_job(j["runtime"], j["job_spec"])
 
-    return JSONResponse({"job_ocid": job_ocid})
+    return JSONResponse({"job_id": job_id})
 
 
 async def proxy_run_job(request):
     j = await request.json()
-    job_ocid = j["job_ocid"]
+    job_id = j["job_id"]
 
     try:
-        return StreamingResponse(run_job(job_ocid), media_type="text/plain")
+        return StreamingResponse(run_job(job_id), media_type="text/plain")
 
     except ValueError as e:
         raise HTTPException(status_code, detail=e.message)
